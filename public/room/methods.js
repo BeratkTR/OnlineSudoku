@@ -181,7 +181,8 @@ socket.on("click_update", ({row, col}) => {
 
 socket.on("select_update", ({row, col, number}) => {
     const cell = document.querySelector(`.sudoku-cell[data-row="${row}"][data-col="${col}"]`);
-    cell.innerHTML = number;
+    // treat 0 as empty (delete) so teammates don't see a literal 0
+    cell.innerHTML = (number == 0) ? "" : number;
 })
 
 socket.on("hint", ({row, col, solve}) => {
