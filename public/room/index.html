@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sudoku Game</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <nav>
+        <h2 id="logo">Sudoku-Des</h2>
+        <button id="logout">Leave Room</button>
+    </nav>
+
+    <div class="room-container">
+    <!-- Left: Sudoku Board -->
+    <div class="sudoku-container" id="sudoku-board"></div>
+
+    <!-- Right: Sidebar -->
+    <div class="sidebar">
+        <h2 id="roomname" style="color: grey;"></h2>
+        <h3>Players</h3>
+        <ul id="user-list"></ul>
+
+        <div class="numbers-panel" id="numbers-panel">
+            <button class="num-btn" data-value="1">1</button>
+            <button class="num-btn" data-value="2">2</button>
+            <button class="num-btn" data-value="3">3</button>
+            <button class="num-btn" data-value="4">4</button>
+            <button class="num-btn" data-value="5">5</button>
+            <button class="num-btn" data-value="6">6</button>
+            <button class="num-btn" data-value="7">7</button>
+            <button class="num-btn" data-value="8">8</button>
+            <button class="num-btn" data-value="9">9</button>
+        </div>
+
+        <button id="hint-btn">Get Hint</button>
+    </div>
+</div>
+
+
+
+<script src="/socket.io/socket.io.js"></script>
+<script type="module" src="./app.js"></script>
+</body>
+</html>

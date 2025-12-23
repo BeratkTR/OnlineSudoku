@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <nav>
+        <h2 id="logo">Sudoku-Des</h2>
+        <button id="logout" onclick="logout()">Logout</button>
+    </nav>
+
+    <h2>Welcome: <span id="username" style="color: green; "></span></h2>
+    
+     <main class="center">
+        <div class="rooms-wrapper">
+            <div class="rooms"></div>
+
+            <button class="create-floating" id="createRoomBtn">+ Create Room</button>
+        </div>
+    </main> 
+
+    <!-- Modal Overlay -->
+    <div id="modalOverlay" class="modal-overlay hidden">
+    <div class="modal">
+        <h2>Create Room</h2>
+        
+        <label>
+            Room Name
+            <input type="text" id="roomName" placeholder="Enter room name" />
+        </label>
+        
+        <label>
+            Difficulty
+            <select id="roomDifficulty">
+                <option value="medium">Medium</option>
+                <option value="hard">Hard</option>
+            </select>
+        </label>
+
+        <div id="error" hidden style="color: red;"></div>
+        
+        <div class="modal-actions">
+            <button id="cancelBtn">Cancel</button>
+            <button id="createBtn" class="primary">Create</button>
+        </div>
+        
+    </div>
+    </div>
+
+
+
+    <script src="/socket.io/socket.io.js"></script>
+    <script src="app.js"></script>
+</body>
+</html>
