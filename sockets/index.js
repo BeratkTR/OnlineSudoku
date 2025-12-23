@@ -26,6 +26,7 @@ function initSockets(server) {
             {$set: {socket: socket.id}}
         )
         const user = await User.findById(socket.request.session.userId)
+        socket.username = user?.username; // Store for quick access
         if(user?.active_room){
             socket.join(user.active_room);
             socket.request.session.roomId = user.active_room;   //kullanıcı oda bilgisi göndermek zorunda kalmaz 
@@ -45,7 +46,7 @@ function initSockets(server) {
 
             const roomId = socket.request.session.roomId;
             if(roomId){
-                socket.to(socket.request.session.roomId).emit("user_offline");
+                socket.to(socket.request.session.roomId).emit("user_offline", { userId: socket.id });
             }
             });
     });

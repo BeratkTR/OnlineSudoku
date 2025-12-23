@@ -1,18 +1,18 @@
-body{
+body {
     margin: 0;
 }
 
-nav{
-   height: 60px;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 0 24px;
-  background: #1e1e1e;
-  color: white;
+nav {
+    height: 60px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 24px;
+    background: #1e1e1e;
+    color: white;
 }
 
-#logout{
+#logout {
     background-color: rgb(233, 1, 152);
     padding: 12px 20px;
     color: white;
@@ -22,12 +22,13 @@ nav{
 
     margin-left: auto;
 }
-#logout:hover{
+
+#logout:hover {
     cursor: pointer;
     background-color: rgb(205, 7, 136);
 }
 
-#logo{
+#logo {
     color: white;
     font-family: 'Trebuchet MS', 'Lucida Sans Unicode', 'Lucida Grande', 'Lucida Sans', Arial, sans-serif;
     margin: 12px 8px;
@@ -74,6 +75,7 @@ body {
 .sudoku-cell:nth-child(3n) {
     border-right: 3px solid #000;
 }
+
 .sudoku-cell:nth-child(n + 19):nth-child(-n + 27),
 .sudoku-cell:nth-child(n + 46):nth-child(-n + 54) {
     border-bottom: 3px solid #000;
@@ -130,16 +132,46 @@ body {
 .sudoku-cell {
     background-color: white;
 }
+
 .sudoku-cell:not(.fixed):hover {
     background-color: rgb(183, 183, 183);
     cursor: pointer;
 }
-.sudoku-cell.fixed{
+
+.sudoku-cell.fixed {
     background-color: rgb(243, 243, 243);
 }
+
 .sudoku-cell.highlighted {
     background-color: rgb(243, 243, 0);
 }
+
 .sudoku-cell.highlighted-friend {
     background-color: rgb(153, 210, 39);
+}
+
+/* Remote Cursor Styles */
+.remote-cursor {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 12px;
+    height: 12px;
+    background: #ff4757;
+    border-radius: 50%;
+    pointer-events: none;
+    z-index: 10000;
+    transition: transform 0.1s ease-out;
+    box-shadow: 0 0 10px rgba(255, 71, 87, 0.5);
+}
+
+.remote-cursor-dot {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 4px;
+    height: 4px;
+    background: white;
+    border-radius: 50%;
 }

@@ -2,6 +2,7 @@ import {socket} from "./socket.js";
 let selected;
 let selected_f;
 let roomId;
+let friendCursor; // Simplified: only one friend handled
 
 export const fetchRoomData = async() => {
     const res = await fetch("/api/room-info", {
@@ -146,6 +147,44 @@ hint.addEventListener("click", () => {
     socket.emit("get_hint", {row,col});
 })
 
+// --- Live Cursor Logic ---
+let lastEmit = 0;
+document.addEventListener("mousemove", (e) => {
+    const now = Date.now();
+    if (now - lastEmit > 50) { // Throttle to 20fps
+        const board = document.getElementById("sudoku-board");
+        const rect = board.getBoundingClientRect();
+        
+        // Calculate position relative to the board's top-left corner
+        const xRel = (e.clientX - rect.left) / rect.width;
+        const yRel = (e.clientY - rect.top) / rect.height;
+        
+        socket.emit("cursor_move", { x: xRel, y: yRel });
+        lastEmit = now;
+    }
+});
+
+socket.on("cursor_update", ({ x, y }) => {
+    if (!friendCursor) {
+        console.log("Creating friend cursor element...");
+        friendCursor = document.createElement("div");
+        friendCursor.className = "remote-cursor";
+        const dot = document.createElement("div");
+        dot.className = "remote-cursor-dot";
+        friendCursor.appendChild(dot);
+        document.body.appendChild(friendCursor);
+    }
+    
+    // Calculate local pixel coordinates based on the local board position
+    const board = document.getElementById("sudoku-board");
+    const rect = board.getBoundingClientRect();
+    
+    const localX = rect.left + (x * rect.width);
+    const localY = rect.top + (y * rect.height);
+    
+    friendCursor.style.transform = `translate(${localX}px, ${localY}px)`;
+});
+
 // ------------------------------------------------------------------------------------
 socket.on("connect", () => {
     console.log("Connected to socket:", socket.id);
@@ -159,8 +198,18 @@ socket.on("user_online", () => {
 })
 socket.on("user_offline", () => {
     document.getElementById("friend").style.backgroundColor = "red";
+    if (friendCursor) {
+        friendCursor.remove();
+        friendCursor = null;
+    }
 })
-socket.on("user_leave", () => fetchRoomData());
+socket.on("user_leave", () => {
+    if (friendCursor) {
+        friendCursor.remove();
+        friendCursor = null;
+    }
+    fetchRoomData();
+});
 socket.on("user_join", () => fetchRoomData());
 
 
