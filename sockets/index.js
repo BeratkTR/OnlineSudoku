@@ -30,9 +30,7 @@ function initSockets(server) {
             socket.join(user.active_room);
             socket.request.session.roomId = user.active_room;   //kullanıcı oda bilgisi göndermek zorunda kalmaz 
             socket.to(user.active_room).emit("user_online")
-        }
-        if(socket.request.session.roomId){
-            socket.to(socket.request.session.roomId).emit("user_online");
+            socket.to(user.active_room).emit("user_join")
         }
 
         require("./room.socket")(io, socket);

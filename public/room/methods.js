@@ -130,7 +130,7 @@ window.addEventListener("keydown", (e) => {
         selected.innerHTML = "";
         socket.emit("select_number", { row, col, number: 0 });
     }
-    else if (e.key == " "){
+    else if (e.key == "Shift"){
         if(!selected) return alert("Choose a cell!")
         const row  = selected.dataset.row;
         const col  = selected.dataset.col;
@@ -190,8 +190,11 @@ socket.on("hint", ({row, col, solve}) => {
     cell.style.fontWeight = "bolder"
     console.log(solve)
     cell.style.color = "green";
+
     cell.classList.add("fixed"); 
     cell.style.cursor = "not-allowed";
+    cell.classList.remove("highlighted")
+    selected = null;
 })
 
 socket.on("success", () => {

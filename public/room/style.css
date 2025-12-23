@@ -132,6 +132,10 @@ body {
 }
 .sudoku-cell:not(.fixed):hover {
     background-color: rgb(183, 183, 183);
+    cursor: pointer;
+}
+.sudoku-cell.fixed{
+    background-color: rgb(243, 243, 243);
 }
 .sudoku-cell.highlighted {
     background-color: rgb(243, 243, 0);

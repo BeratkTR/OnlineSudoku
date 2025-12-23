@@ -1,9 +1,9 @@
-body{
-    margin: 0;
+body {
+  margin: 0;
 }
 
-nav{
-   height: 60px;
+nav {
+  height: 60px;
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -12,25 +12,26 @@ nav{
   color: white;
 }
 
-#logout{
-    background-color: red;
-    padding: 12px 20px;
-    color: white;
-    font-weight: bolder;
-    border: none;
-    border-radius: 6px;
+#logout {
+  background-color: red;
+  padding: 12px 20px;
+  color: white;
+  font-weight: bolder;
+  border: none;
+  border-radius: 6px;
 
-    margin-left: auto;
-}
-#logout:hover{
-    cursor: pointer;
-    background-color: rgb(255, 48, 48);
+  margin-left: auto;
 }
 
-#logo{
-    color: white;
-    font-family: 'Trebuchet MS', 'Lucida Sans Unicode', 'Lucida Grande', 'Lucida Sans', Arial, sans-serif;
-    margin: 12px 8px;
+#logout:hover {
+  cursor: pointer;
+  background-color: rgb(255, 48, 48);
+}
+
+#logo {
+  color: white;
+  font-family: 'Trebuchet MS', 'Lucida Sans Unicode', 'Lucida Grande', 'Lucida Sans', Arial, sans-serif;
+  margin: 12px 8px;
 }
 
 
@@ -60,6 +61,11 @@ button {
   border: none;
 }
 
+.primary:hover {
+  background: #348b37;
+  cursor: pointer;
+}
+
 .secondary {
   background: #2196f3;
   color: white;
@@ -82,7 +88,8 @@ button {
   display: flex;
   flex-direction: column;
   gap: 12px;
-  padding-bottom: 60px; /* buton alanı için */
+  padding-bottom: 60px;
+  /* buton alanı için */
 }
 
 .create-floating {
@@ -98,7 +105,7 @@ button {
   font-weight: bold;
   cursor: pointer;
 
-  box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
 }
 
 .create-floating:hover {
@@ -145,7 +152,7 @@ button {
   left: 0;
   width: 100%;
   height: 100%;
-  background: rgba(0,0,0,0.5);
+  background: rgba(0, 0, 0, 0.5);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -176,5 +183,3 @@ button {
 .hidden {
   display: none;
 }
-
-

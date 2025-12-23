@@ -117,7 +117,7 @@ const joinRoom = async(roomId) =>  {
         body: JSON.stringify({roomId})
     })
     if(res.status == 409) return alert("Room is full");
-    socket.emit("user_join");
+    // socket.emit("user_join");  // Henüz istek sunucuya gidip odaya katılma gerçekleşmedi
     window.location.href = "/room"
 }
 
