@@ -78,6 +78,11 @@ createBtn.addEventListener("click", async () => {
     return;
   }
 
+  // Disable button and show loading state
+  const originalText = createBtn.innerHTML;
+  createBtn.disabled = true;
+  createBtn.innerHTML = "Creating...";
+
   try {
     const res = await fetch("/api/createRoom", {
       method: "POST",
@@ -85,26 +90,26 @@ createBtn.addEventListener("click", async () => {
       body: JSON.stringify({ name, difficulty })
     });
 
-    // if (!res.ok) {
-    //   throw new Error("Failed to create room");
-    // }
     if(res.status == 409){
         errorEl.hidden = false;
-        errorEl.innerHTML = res.statusText;
+        errorEl.innerHTML = "A room with this name already exists";
+        createBtn.disabled = false;
+        createBtn.innerHTML = originalText;
         return;
     }
 
-    const data = await res.json();    
-    const roomId = data._id.toString();
+    if (!res.ok) {
+        throw new Error("Failed to create room");
+    }
 
+    const data = await res.json();    
     modal.classList.add("hidden");
-    // document.getElementById("roomName").value = "";
-    // fetchRooms(); // odaları yeniden çek
-    // window.location.href = "/room/" + roomId;
     window.location.href = "/room";
 
   } catch (err) {
     alert(err.message);
+    createBtn.disabled = false;
+    createBtn.innerHTML = originalText;
   }
 });
 

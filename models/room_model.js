@@ -2,7 +2,7 @@ const mongoose = require("mongoose")
 
 const roomSchema = new mongoose.Schema(
     {
-        name: {type: String, required: true, trim: true},
+        name: {type: String, required: true, trim: true, unique: true},
         difficulty: String,
         board: [[Number]],
         initial_data: [[Number]],
