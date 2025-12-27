@@ -39,8 +39,25 @@
 </div>
 
 
+    <!-- Chat FAB and Window -->
+    <div id="chat-wrapper">
+        <div id="chat-window" class="hidden">
+            <div id="chat-header">
+                <span>Room Chat</span>
+                <button id="close-chat">&times;</button>
+            </div>
+            <div id="chat-messages"></div>
+            <div id="chat-input-area">
+                <input type="text" id="chat-input" placeholder="Type a message...">
+                <button id="send-btn">Send</button>
+            </div>
+        </div>
+        <button id="chat-fab">
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path></svg>
+        </button>
+    </div>
 
-<script src="/socket.io/socket.io.js"></script>
+    <script src="/socket.io/socket.io.js"></script>
 <script type="module" src="./app.js"></script>
 </body>
 </html>

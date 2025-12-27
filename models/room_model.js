@@ -9,6 +9,11 @@ const roomSchema = new mongoose.Schema(
         solution: [[Number]],
 
         users: {type: [String], default: null},
+        messages: [{
+            sender: String,
+            content: String,
+            timestamp: { type: Date, default: Date.now }
+        }]
     }
 )
 

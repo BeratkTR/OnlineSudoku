@@ -29,6 +29,7 @@ function initSockets(server) {
         socket.username = user?.username; // Store for quick access
         if(user?.active_room){
             socket.join(user.active_room);
+            socket.roomId = user.active_room; // Store on socket object
             socket.request.session.roomId = user.active_room;   //kullanıcı oda bilgisi göndermek zorunda kalmaz 
             socket.to(user.active_room).emit("user_online")
             socket.to(user.active_room).emit("user_join")
