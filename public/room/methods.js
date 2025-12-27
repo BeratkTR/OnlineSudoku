@@ -229,7 +229,30 @@ const handleNumberInput = (number) => {
 
 // --- DOM Event Listeners ---
 document.addEventListener("DOMContentLoaded", () => {
-    // ... previous logic remains same until mode UI ...
+    // Chat UI
+    const chatFab = document.getElementById("chat-fab");
+    const chatWindow = document.getElementById("chat-window");
+    const closeChat = document.getElementById("close-chat");
+    const sendBtn = document.getElementById("send-btn");
+    const chatInput = document.getElementById("chat-input");
+
+    if (chatFab) {
+        chatFab.addEventListener("click", () => {
+            chatWindow.classList.toggle("hidden");
+            if (!chatWindow.classList.contains("hidden")) {
+                chatInput.focus();
+                const chatMessages = document.getElementById("chat-messages");
+                if (chatMessages) chatMessages.scrollTop = chatMessages.scrollHeight;
+            }
+        });
+    }
+    if (closeChat) closeChat.addEventListener("click", () => chatWindow.classList.add("hidden"));
+    if (sendBtn) sendBtn.addEventListener("click", sendMessage);
+    if (chatInput) chatInput.addEventListener("keypress", (e) => {
+        if (e.key === "Enter") sendMessage();
+    });
+
+    // Mode UI
     const modeInsert = document.getElementById("mode-insert");
     const modeNote = document.getElementById("mode-note");
     if (modeInsert && modeNote) {
@@ -244,6 +267,21 @@ document.addEventListener("DOMContentLoaded", () => {
             modeInsert.classList.remove("active");
         });
     }
+
+    // Hint Button
+    const hintBtn = document.getElementById("hint-btn");
+    if (hintBtn) {
+        hintBtn.addEventListener("click", () => {
+            if(!selected) return alert("Choose a cell!")
+            socket.emit("get_hint", {row: selected.dataset.row, col: selected.dataset.col});
+        })
+    }
+
+    // Number Buttons
+    const numbers = document.querySelectorAll(".num-btn");
+    numbers.forEach(num => {
+        num.addEventListener("click", () => handleNumberInput(num.dataset.value));
+    });
 });
 
 window.addEventListener("keydown", (e) => {
