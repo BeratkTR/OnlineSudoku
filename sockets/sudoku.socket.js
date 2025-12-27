@@ -8,12 +8,12 @@ module.exports = (io, socket) => {
     socket.on("select_number", async({row, col, number }) => {
         socket.to(socket.request.session.roomId).emit("select_update", {row, col, number});
         
-        const update = { [`board.${row}.${col}`]: number };
-        // If deleting a number, also clear notes in that cell
-        if (number == 0) {
-            update[`notesBoard.${row}.${col}`] = [];
-            socket.to(socket.request.session.roomId).emit("note_clear", {row, col});
-        }
+        // Clearing notes in DB whenever a main number is inserted or deleted
+        const update = { 
+            [`board.${row}.${col}`]: number,
+            [`notesBoard.${row}.${col}`]: []
+        };
+        socket.to(socket.request.session.roomId).emit("note_clear", {row, col});
 
         await Room.updateOne(
             {_id: socket.request.session.roomId},

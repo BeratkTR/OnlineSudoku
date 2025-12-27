@@ -384,7 +384,10 @@ socket.on("select_update", ({row, col, number}) => {
     if (cell) {
         const valDiv = cell.querySelector(".cell-value");
         valDiv.innerHTML = (number == 0) ? "" : number;
-        if (number == 0) cell.querySelector(".cell-notes").innerHTML = "";
+        
+        // Visually clear notes whenever a main number is updated/deleted by partner
+        const notesDiv = cell.querySelector(".cell-notes");
+        if (notesDiv) notesDiv.innerHTML = "";
     }
 })
 
