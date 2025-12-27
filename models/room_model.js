@@ -9,6 +9,7 @@ const roomSchema = new mongoose.Schema(
         solution: [[Number]],
 
         users: {type: [String], default: null},
+        notesBoard: { type: [[[Number]]], default: [] },
         messages: [{
             sender: String,
             content: String,

@@ -4,18 +4,25 @@ let selected_f;
 let roomId;
 let friendCursor;
 let currentUsername = "";
+let currentMode = "insert"; // "insert" or "note"
+
+const chatMessages = document.getElementById("chat-messages");
+const chatFab = document.getElementById("chat-fab");
+const chatWindow = document.getElementById("chat-window");
+const closeChat = document.getElementById("close-chat");
+const sendBtn = document.getElementById("send-btn");
+const chatInput = document.getElementById("chat-input");
 
 export const fetchRoomData = async() => {
     try {
-        console.log("Fetching room data...");
         const res = await fetch("/api/room-info")
         if(res.status == 401) return window.location.href = "/login"
         if(res.status == 404 || res.status == 403) return window.location.href = "/";
 
         const data = await res.json();
-        const {_id, name, difficulty, board, initial_data, users, messages} = data;
+        const {_id, name, difficulty, board, initial_data, users, messages, notesBoard} = data;
         roomId = _id.toString()
-        createBoard(board, initial_data);
+        createBoard(board, initial_data, notesBoard);
 
         const res2 = await fetch("/api/username",{
             method: "POST",
@@ -24,21 +31,14 @@ export const fetchRoomData = async() => {
         })  
         const {userList} = await res2.json();
         
-        // Set current username from userList
         const me = userList.find(u => u.user === "me");
-        if (me) {
-            currentUsername = me.username;
-            console.log("Current user identified as:", currentUsername);
-        }
+        if (me) currentUsername = me.username;
 
         renderUsers(name, userList, difficulty);
 
-        // Initial load of messages
-        const chatMessages = document.getElementById("chat-messages");
         if (chatMessages) {
             chatMessages.innerHTML = "";
             if (messages && messages.length > 0) {
-                console.log(`Loading ${messages.length} archived messages.`);
                 messages.forEach(msg => {
                     appendMessage(msg.sender, msg.content, msg.sender === currentUsername);
                 });
@@ -59,7 +59,7 @@ export const logout = async () => {
     }
 }
 
-function createBoard(board, initial_data) {
+function createBoard(board, initial_data, notesBoard = []) {
     const boardElement = document.getElementById("sudoku-board");
     if (!boardElement) return;
     boardElement.innerHTML = "";
@@ -67,28 +67,64 @@ function createBoard(board, initial_data) {
         for (let col = 0; col < 9; col++) {
             const cell = document.createElement("div");
             cell.classList.add("sudoku-cell");
+            cell.dataset.row = row;
+            cell.dataset.col = col;
+
+            const valDiv = document.createElement("div");
+            valDiv.className = "cell-value";
+            cell.appendChild(valDiv);
+
+            const notesDiv = document.createElement("div");
+            notesDiv.className = "cell-notes";
+            cell.appendChild(notesDiv);
+
             const value = board[row][col];
             if(initial_data[row][col] != 0){
                 cell.style.fontWeight = "bolder";
                 cell.style.cursor = "not-allowed";
                 cell.classList.add("fixed");
             }
-            if(initial_data[row][col] == -1) cell.style.color = "green"
-            if (value !== 0) cell.textContent = value;
+            if(initial_data[row][col] == -1) {
+                valDiv.style.color = "green";
+                valDiv.classList.add("hint-value");
+            }
+            if (value !== 0) valDiv.textContent = value;
             
-            cell.dataset.row = row;
-            cell.dataset.col = col;
+            // Render notes
+            if (notesBoard[row] && notesBoard[row][col]) {
+                updateNotesInCell(cell, notesBoard[row][col]);
+            }
+
             cell.style.userSelect = "none"
             cell.addEventListener("click", () => {
                 if(cell.classList.contains("fixed")) return;
                 if(selected) selected.classList.remove("highlighted");
                 selected = cell;
                 cell.classList.add("highlighted")
-                socket.emit("click", {roomId: roomId, row, col});
+                socket.emit("click", {row, col});
             });
             boardElement.appendChild(cell);
         }
     }
+}
+
+function updateNotesInCell(cell, notes) {
+    const notesDiv = cell.querySelector(".cell-notes");
+    if (!notesDiv) return;
+    notesDiv.innerHTML = "";
+    // Only show notes if there's no main value
+    const valDiv = cell.querySelector(".cell-value");
+    if (valDiv && valDiv.textContent !== "") {
+        return;
+    }
+    
+    // We only show up to 4 notes in corners (using grid)
+    notes.slice(0, 4).forEach(num => {
+        const noteSpan = document.createElement("span");
+        noteSpan.className = "note";
+        noteSpan.textContent = num;
+        notesDiv.appendChild(noteSpan);
+    });
 }
 
 function renderUsers(name, userList, difficulty) {
@@ -113,24 +149,16 @@ function renderUsers(name, userList, difficulty) {
 
 function appendMessage(sender, message, isMe) {
     const chatMessages = document.getElementById("chat-messages");
-    if (!chatMessages) {
-        console.warn("Attempted to append message but chat-messages container not found.");
-        return;
-    }
-    
+    if (!chatMessages) return;
     const messageEl = document.createElement("div");
     messageEl.className = `message ${isMe ? 'sent' : 'received'}`;
-    
     const userLabel = document.createElement("span");
     userLabel.className = "message-user";
     userLabel.textContent = isMe ? "You" : sender;
-    
     const content = document.createElement("div");
     content.textContent = message;
-    
     messageEl.appendChild(userLabel);
     messageEl.appendChild(content);
-    
     chatMessages.appendChild(messageEl);
     chatMessages.scrollTop = chatMessages.scrollHeight;
 }
@@ -140,75 +168,101 @@ const sendMessage = () => {
     if (!chatInput) return;
     const text = chatInput.value.trim();
     if (text) {
-        console.log("Sending message:", text);
         socket.emit("chat_message", text);
         chatInput.value = "";
     }
 };
 
-// --- DOM Event Listeners (ensure they attach after page load) ---
-document.addEventListener("DOMContentLoaded", () => {
-    const chatFab = document.getElementById("chat-fab");
-    const chatWindow = document.getElementById("chat-window");
-    const closeChat = document.getElementById("close-chat");
-    const sendBtn = document.getElementById("send-btn");
-    const chatInput = document.getElementById("chat-input");
+const toggleMode = () => {
+    const modeInsert = document.getElementById("mode-insert");
+    const modeNote = document.getElementById("mode-note");
+    if (currentMode === "insert") {
+        currentMode = "note";
+        if (modeNote) modeNote.classList.add("active");
+        if (modeInsert) modeInsert.classList.remove("active");
+    } else {
+        currentMode = "insert";
+        if (modeInsert) modeInsert.classList.add("active");
+        if (modeNote) modeNote.classList.remove("active");
+    }
+};
 
-    if (chatFab) {
-        chatFab.addEventListener("click", () => {
-            chatWindow.classList.toggle("hidden");
-            if (!chatWindow.classList.contains("hidden")) {
-                chatInput.focus();
-                const chatMessages = document.getElementById("chat-messages");
-                if (chatMessages) chatMessages.scrollTop = chatMessages.scrollHeight;
-            }
+const handleNumberInput = (number) => {
+    if (!selected) return alert("Choose a cell!");
+    const row = selected.dataset.row;
+    const col = selected.dataset.col;
+
+    if (currentMode === "insert") {
+        const valDiv = selected.querySelector(".cell-value");
+        const notesDiv = selected.querySelector(".cell-notes");
+        if (number == 0) {
+            valDiv.innerHTML = "";
+            if (notesDiv) notesDiv.innerHTML = "";
+        } else {
+            valDiv.innerHTML = number;
+            // Clear notes if a main number is inserted
+            if (notesDiv) notesDiv.innerHTML = "";
+        }
+        socket.emit("select_number", {row, col, number});
+    } else {
+        // Note mode
+        const valDiv = selected.querySelector(".cell-value");
+        const notesDiv = selected.querySelector(".cell-notes");
+        
+        if (number == 0) {
+            // In note mode, delete clears everything
+            valDiv.innerHTML = "";
+            if (notesDiv) notesDiv.innerHTML = "";
+            socket.emit("select_number", {row, col, number: 0});
+            return;
+        }
+
+        // If there's a main number, clear it first so notes can be seen
+        if (valDiv.innerHTML !== "") {
+            valDiv.innerHTML = "";
+            socket.emit("select_number", {row, col, number: 0});
+        }
+        
+        socket.emit("toggle_note", {row, col, number});
+    }
+};
+
+// --- DOM Event Listeners ---
+document.addEventListener("DOMContentLoaded", () => {
+    // ... previous logic remains same until mode UI ...
+    const modeInsert = document.getElementById("mode-insert");
+    const modeNote = document.getElementById("mode-note");
+    if (modeInsert && modeNote) {
+        modeInsert.addEventListener("click", () => {
+            currentMode = "insert";
+            modeInsert.classList.add("active");
+            modeNote.classList.remove("active");
+        });
+        modeNote.addEventListener("click", () => {
+            currentMode = "note";
+            modeNote.classList.add("active");
+            modeInsert.classList.remove("active");
         });
     }
-    if (closeChat) {
-        closeChat.addEventListener("click", () => {
-            chatWindow.classList.add("hidden");
-        });
-    }
-    if (sendBtn) sendBtn.addEventListener("click", sendMessage);
-    if (chatInput) {
-        chatInput.addEventListener("keypress", (e) => {
-            if (e.key === "Enter") sendMessage();
-        });
-    }
-    
-    const hintBtn = document.getElementById("hint-btn");
-    if (hintBtn) {
-        hintBtn.addEventListener("click", () => {
-            if(!selected) return alert("Choose a cell!")
-            socket.emit("get_hint", {row: selected.dataset.row, col: selected.dataset.col});
-        })
-    }
-    
-    const numbers = document.querySelectorAll(".num-btn");
-    numbers.forEach(num => {
-        num.addEventListener("click", () => {
-            if(!selected) return alert("Choose a cell!")
-            const number = num.dataset.value;
-            const row = selected.dataset.row;
-            const col = selected.dataset.col;
-            selected.innerHTML = number;
-            socket.emit("select_number", {row, col, number})
-        })
-    });
 });
 
 window.addEventListener("keydown", (e) => {
+    if (document.activeElement === chatInput) return; 
+
+    if (e.key === "Tab") {
+        e.preventDefault();
+        toggleMode();
+        return;
+    }
+
     if (!selected) return;
-    const row = selected.dataset.row;
-    const col = selected.dataset.col;
+
     if (e.key >= '1' && e.key <= '9') {
-        selected.innerHTML = e.key;
-        socket.emit("select_number", { row, col, number: e.key });
+        handleNumberInput(e.key);
     } else if (e.key === 'Backspace' || e.key === 'Delete' || e.key === '0') {
-        selected.innerHTML = "";
-        socket.emit("select_number", { row, col, number: 0 });
+        handleNumberInput(0);
     } else if (e.key == "Shift") {
-        socket.emit("get_hint", {row,col});
+        socket.emit("get_hint", {row: selected.dataset.row, col: selected.dataset.col});
     }
 });
 
@@ -229,8 +283,20 @@ document.addEventListener("mousemove", (e) => {
 
 // --- Socket Listeners ---
 socket.on("chat_message", (data) => {
-    console.log("New message received via socket:", data);
     appendMessage(data.username, data.message, data.userId === socket.id);
+});
+
+socket.on("note_update", ({row, col, notes}) => {
+    const cell = document.querySelector(`.sudoku-cell[data-row="${row}"][data-col="${col}"]`);
+    if (cell) updateNotesInCell(cell, notes);
+});
+
+socket.on("note_clear", ({row, col}) => {
+    const cell = document.querySelector(`.sudoku-cell[data-row="${row}"][data-col="${col}"]`);
+    if (cell) {
+        const notesDiv = cell.querySelector(".cell-notes");
+        if (notesDiv) notesDiv.innerHTML = "";
+    }
 });
 
 socket.on("cursor_update", ({ x, y }) => {
@@ -277,18 +343,25 @@ socket.on("click_update", ({row, col}) => {
 
 socket.on("select_update", ({row, col, number}) => {
     const cell = document.querySelector(`.sudoku-cell[data-row="${row}"][data-col="${col}"]`);
-    if (cell) cell.innerHTML = (number == 0) ? "" : number;
+    if (cell) {
+        const valDiv = cell.querySelector(".cell-value");
+        valDiv.innerHTML = (number == 0) ? "" : number;
+        if (number == 0) cell.querySelector(".cell-notes").innerHTML = "";
+    }
 })
 
 socket.on("hint", ({row, col, solve}) => {
     const cell = document.querySelector(`.sudoku-cell[data-row="${row}"][data-col="${col}"]`);
     if (cell) {
-        cell.innerHTML = solve;
+        const valDiv = cell.querySelector(".cell-value");
+        valDiv.innerHTML = solve;
+        valDiv.style.color = "green";
+        valDiv.classList.add("hint-value");
         cell.style.fontWeight = "bolder"
-        cell.style.color = "green";
         cell.classList.add("fixed"); 
         cell.style.cursor = "not-allowed";
         cell.classList.remove("highlighted")
+        cell.querySelector(".cell-notes").innerHTML = "";
         if (selected === cell) selected = null;
     }
 })
