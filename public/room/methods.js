@@ -4,6 +4,7 @@ let selected_f;
 let roomId;
 let friendCursor;
 let currentUsername = "";
+let currentUserId = "";
 let currentMode = "insert"; // "insert" or "note"
 
 const chatMessages = document.getElementById("chat-messages");
@@ -20,9 +21,8 @@ export const fetchRoomData = async() => {
         if(res.status == 404 || res.status == 403) return window.location.href = "/";
 
         const data = await res.json();
-        const {_id, name, difficulty, board, initial_data, users, messages, notesBoard} = data;
+        const {_id, name, difficulty, board, initial_data, users, messages, notesBoard, ownersBoard} = data;
         roomId = _id.toString()
-        createBoard(board, initial_data, notesBoard);
 
         const res2 = await fetch("/api/username",{
             method: "POST",
@@ -32,8 +32,12 @@ export const fetchRoomData = async() => {
         const {userList} = await res2.json();
         
         const me = userList.find(u => u.user === "me");
-        if (me) currentUsername = me.username;
+        if (me) {
+            currentUsername = me.username;
+            currentUserId = me.userId.toString();
+        }
 
+        createBoard(board, initial_data, notesBoard, ownersBoard, currentUserId);
         renderUsers(name, userList, difficulty);
 
         if (chatMessages) {
@@ -59,10 +63,14 @@ export const logout = async () => {
     }
 }
 
-function createBoard(board, initial_data, notesBoard = []) {
+function createBoard(board, initial_data, notesBoard = [], ownersBoard = [], myId = "") {
     const boardElement = document.getElementById("sudoku-board");
     if (!boardElement) return;
     boardElement.innerHTML = "";
+    
+    // Safety check for ownersBoard
+    const hasOwners = ownersBoard && ownersBoard.length === 9;
+
     for (let row = 0; row < 9; row++) {
         for (let col = 0; col < 9; col++) {
             const cell = document.createElement("div");
@@ -79,19 +87,29 @@ function createBoard(board, initial_data, notesBoard = []) {
             cell.appendChild(notesDiv);
 
             const value = board[row][col];
+            const ownerId = (hasOwners && ownersBoard[row]) ? ownersBoard[row][col] : null;
+
             if(initial_data[row][col] != 0){
                 cell.style.fontWeight = "bolder";
                 cell.style.cursor = "not-allowed";
                 cell.classList.add("fixed");
             }
+            
             if(initial_data[row][col] == -1) {
                 valDiv.style.color = "green";
                 valDiv.classList.add("hint-value");
+            } else if (value !== 0 && ownerId) {
+                // Strong string comparison for IDs
+                if (String(ownerId) === String(myId)) {
+                    valDiv.classList.add("my-number");
+                } else {
+                    valDiv.classList.add("friend-number");
+                }
             }
+
             if (value !== 0) valDiv.textContent = value;
             
-            // Render notes
-            if (notesBoard[row] && notesBoard[row][col]) {
+            if (notesBoard && notesBoard[row] && notesBoard[row][col]) {
                 updateNotesInCell(cell, notesBoard[row][col]);
             }
 
@@ -112,13 +130,9 @@ function updateNotesInCell(cell, notes) {
     const notesDiv = cell.querySelector(".cell-notes");
     if (!notesDiv) return;
     notesDiv.innerHTML = "";
-    // Only show notes if there's no main value
     const valDiv = cell.querySelector(".cell-value");
-    if (valDiv && valDiv.textContent !== "") {
-        return;
-    }
+    if (valDiv && valDiv.textContent !== "") return;
     
-    // We only show up to 4 notes in corners (using grid)
     notes.slice(0, 4).forEach(num => {
         const noteSpan = document.createElement("span");
         noteSpan.className = "note";
@@ -139,6 +153,7 @@ function renderUsers(name, userList, difficulty) {
         if(user.user == "me") {
             li.style.backgroundColor = "green";
             li.id = "user";
+            if (user.userId) currentUserId = user.userId.toString();
         } else {
             li.style.backgroundColor = user.socket ? "green" : "red";
             li.id = "friend";
@@ -189,47 +204,41 @@ const toggleMode = () => {
 
 const handleNumberInput = (number) => {
     if (!selected) return alert("Choose a cell!");
-    const row = selected.dataset.row;
-    const col = selected.dataset.col;
+    const row = parseInt(selected.dataset.row);
+    const col = parseInt(selected.dataset.col);
 
     if (currentMode === "insert") {
         const valDiv = selected.querySelector(".cell-value");
         const notesDiv = selected.querySelector(".cell-notes");
+        valDiv.classList.remove("my-number", "friend-number");
+        
         if (number == 0) {
             valDiv.innerHTML = "";
             if (notesDiv) notesDiv.innerHTML = "";
         } else {
             valDiv.innerHTML = number;
-            // Clear notes if a main number is inserted
+            valDiv.classList.add("my-number"); // Local input is always blue
             if (notesDiv) notesDiv.innerHTML = "";
         }
         socket.emit("select_number", {row, col, number});
     } else {
-        // Note mode
         const valDiv = selected.querySelector(".cell-value");
         const notesDiv = selected.querySelector(".cell-notes");
-        
         if (number == 0) {
-            // In note mode, delete clears everything
             valDiv.innerHTML = "";
             if (notesDiv) notesDiv.innerHTML = "";
             socket.emit("select_number", {row, col, number: 0});
             return;
         }
-
-        // If there's a main number, clear it first so notes can be seen
         if (valDiv.innerHTML !== "") {
             valDiv.innerHTML = "";
             socket.emit("select_number", {row, col, number: 0});
         }
-        
         socket.emit("toggle_note", {row, col, number});
     }
 };
 
-// --- DOM Event Listeners ---
 document.addEventListener("DOMContentLoaded", () => {
-    // Chat UI
     const chatFab = document.getElementById("chat-fab");
     const chatWindow = document.getElementById("chat-window");
     const closeChat = document.getElementById("close-chat");
@@ -252,7 +261,6 @@ document.addEventListener("DOMContentLoaded", () => {
         if (e.key === "Enter") sendMessage();
     });
 
-    // Mode UI
     const modeInsert = document.getElementById("mode-insert");
     const modeNote = document.getElementById("mode-note");
     if (modeInsert && modeNote) {
@@ -268,7 +276,6 @@ document.addEventListener("DOMContentLoaded", () => {
         });
     }
 
-    // Hint Button
     const hintBtn = document.getElementById("hint-btn");
     if (hintBtn) {
         hintBtn.addEventListener("click", () => {
@@ -277,7 +284,6 @@ document.addEventListener("DOMContentLoaded", () => {
         })
     }
 
-    // Number Buttons
     const numbers = document.querySelectorAll(".num-btn");
     numbers.forEach(num => {
         num.addEventListener("click", () => handleNumberInput(num.dataset.value));
@@ -286,15 +292,12 @@ document.addEventListener("DOMContentLoaded", () => {
 
 window.addEventListener("keydown", (e) => {
     if (document.activeElement === chatInput) return; 
-
     if (e.key === "Tab") {
         e.preventDefault();
         toggleMode();
         return;
     }
-
     if (!selected) return;
-
     if (e.key >= '1' && e.key <= '9') {
         handleNumberInput(e.key);
     } else if (e.key === 'Backspace' || e.key === 'Delete' || e.key === '0') {
@@ -304,7 +307,6 @@ window.addEventListener("keydown", (e) => {
     }
 });
 
-// --- Live Cursor ---
 let lastEmit = 0;
 document.addEventListener("mousemove", (e) => {
     const now = Date.now();
@@ -319,7 +321,6 @@ document.addEventListener("mousemove", (e) => {
     }
 });
 
-// --- Socket Listeners ---
 socket.on("chat_message", (data) => {
     appendMessage(data.username, data.message, data.userId === socket.id);
 });
@@ -379,13 +380,22 @@ socket.on("click_update", ({row, col}) => {
     }
 })
 
-socket.on("select_update", ({row, col, number}) => {
+socket.on("select_update", ({row, col, number, userId}) => {
     const cell = document.querySelector(`.sudoku-cell[data-row="${row}"][data-col="${col}"]`);
     if (cell) {
         const valDiv = cell.querySelector(".cell-value");
         valDiv.innerHTML = (number == 0) ? "" : number;
+        valDiv.classList.remove("my-number", "friend-number");
         
-        // Visually clear notes whenever a main number is updated/deleted by partner
+        if (number != 0) {
+            // Compare string IDs correctly
+            if (userId && currentUserId && userId.toString() === currentUserId.toString()) {
+                valDiv.classList.add("my-number");
+            } else {
+                valDiv.classList.add("friend-number");
+            }
+        }
+        
         const notesDiv = cell.querySelector(".cell-notes");
         if (notesDiv) notesDiv.innerHTML = "";
     }

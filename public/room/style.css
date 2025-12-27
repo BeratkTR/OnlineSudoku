@@ -152,6 +152,16 @@ body {
     text-shadow: 0 0 10px rgba(0, 255, 0, 0.4);
 }
 
+.cell-value.my-number {
+    color: #2e86de;
+    /* Vibrant Blue */
+}
+
+.cell-value.friend-number {
+    color: #ee5253;
+    /* Vibrant Red */
+}
+
 .cell-notes {
     position: absolute;
     top: 0;

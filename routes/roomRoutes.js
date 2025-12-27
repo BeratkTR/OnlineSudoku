@@ -40,7 +40,8 @@ router.post("/createRoom", requireAuth, async(req,res) => {
         const data = await getBoard(difficulty);
         const {board, solution} = data;
         const notesBoard = Array.from({ length: 9 }, () => Array.from({ length: 9 }, () => []));
-        room = await Room.create({name,  difficulty, board, initial_data: board, solution, users: [req.session.userId], notesBoard})
+        const ownersBoard = Array.from({ length: 9 }, () => Array.from({ length: 9 }, () => null));
+        room = await Room.create({name,  difficulty, board, initial_data: board, solution, users: [req.session.userId], notesBoard, ownersBoard})
         await User.updateOne(
             {_id: req.session.userId},
             {active_room: room._id.toString()}

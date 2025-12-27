@@ -10,6 +10,7 @@ const roomSchema = new mongoose.Schema(
 
         users: {type: [String], default: null},
         notesBoard: { type: [[[Number]]], default: [] },
+        ownersBoard: { type: [[String]], default: [] },
         messages: [{
             sender: String,
             content: String,
